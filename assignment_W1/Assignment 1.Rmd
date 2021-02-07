@@ -1,0 +1,144 @@
+---
+title: "Assignment 1"
+author: "Astrid Rybner"
+date: "2/2/2021"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+3. Code: Your colleague has found some ruins during a hike in the Blue Mountains and recorded the coordinates of structures on her phone(RCFeature.csv). She would like to map her points but has no computer or mapping skills. Can you make a map that she can work with using only a browser? She needs an interactive map that she can download to her computer and use straightaway.
+  
+4. Create a standalone .html map in Leaflet showing at least basic topography and relief, and load in the table of points. Make sure she can see the FeatureID, FeatureType and Description attributes when she hovers over the point markers. 
+  
+5. Consider adding elements such as minimap() and measure() for easier map interaction
+  
+6. Explore differentiating the markers (e.g. by size using Accuracy field)
+  
+7. Explore the option of clustering markers with addMarkers(clusterOptions = markerClusterOptions()). Do you recommend marker clustering here?
+
+
+
+##### Answers question 3 - 7 #####
+
+```{r}
+
+# load packages
+library(leaflet)
+library(htmltools)
+library(htmlwidgets)
+library(tidyverse)
+
+```
+
+
+Here I am first loading in the file with the coordinates of the different sites of the findings into the object 'places'. I then remove the rows with missing coordinate info. Then I make the base map with all the finding sites using leaflet() and addTiles() to load the datapoints onto a base tiled map. I also use addMarkers to mark all the places of the findings and specify that these markers should include a desciption, the finding type and the finding ID. 
+
+I have here made the size of the marker according to the Accuracy of the finding (in the Accuracy collumn of the finding metadata). I do this by setting the radius argument in the addCicleMarkers() to be equal to the Accuracy. 
+
+```{r}
+
+# Loading the file with the coordinates of the spots where ruin structures have been found 
+
+places <-read.csv("/Users/astridrybner/Documents/spatial_analytics/Assignment_W1/RCFeature.csv")
+
+#remove rows if there is no info in either the longitude or latitude collumn
+places <- places %>% filter(!is.na(Longitude) | !is.na(Latitude)) 
+
+#make base map with all the sites of findings - and info about each site
+base_map <- leaflet() %>% 
+  addTiles() %>% 
+  addCircleMarkers(#adding circle markers to all the coordinate pairs
+            lng = places$Longitude, 
+             lat = places$Latitude,
+             popup = paste("<strong>","Finding:",(places$Description),"</strong>",   
+                           "<br>", "Feature Type:", places$FeatureType,
+                            "<br>", "Feature ID:", places$FeatureID),
+            radius = places$Accuracy,
+            stroke = FALSE,
+            fillOpacity = 0.5
+            )
+            
+base_map
+
+```
+
+Down here I made the same plot with the clusterOptions() to specify that the map should include info about how the findings are clustered together. Here the circles all have the same size as I found that it was not intuitive to plot them both with different sizes and in clusters. 
+
+```{r}
+places <-read.csv("/Users/astridrybner/Documents/Spatial Analytics/W1/spatial-analytics/data/RCFeature.csv")
+
+#remove rows if there is no info in either the longitude or latitude collumn
+places <- places %>% filter(!is.na(Longitude) | !is.na(Latitude)) 
+
+
+#make base map with all the sites of findings - and info about each site
+base_map_clusters <- leaflet() %>% 
+  addTiles() %>% 
+  addCircleMarkers(#adding circle markers to all the coordinate pairs
+            lng = places$Longitude, 
+             lat = places$Latitude,
+             popup = paste("<strong>","Finding:",(places$Description),"</strong>",   
+                           "<br>", "Feature Type:", places$FeatureType,
+                            "<br>", "Feature ID:", places$FeatureID), 
+            clusterOptions = markerClusterOptions(), 
+            )
+            
+base_map_clusters
+
+```
+
+
+
+Now adding more layers to the first map I made. Here I use grep() to grab all the "map backgrounds" that start with Esri (ie all the backgrounds in the esri package..) and put them into the object map_layers and then add these layers to base_map object. 
+
+
+```{r}
+map_layers <- grep("^Esri", providers, value = TRUE) 
+
+
+for (provider in map_layers) { #add map layers to the base map 
+  base_map <- base_map %>% addProviderTiles(provider, group = provider)
+}
+
+```
+
+
+Now making the final map with all the layers and with a mini map in the bottom right corner with addMiniMap(). Additionally adding the function that you can measure distances on the map with addMeasure(). 
+
+```{r}
+
+# make full map with all layers
+full_map <- base_map %>%
+  addLayersControl(baseGroups = names(map_layers),
+                   options = layersControlOptions(collapsed = FALSE)) %>%
+  addMiniMap(tiles = map_layers[[1]], toggleDisplay = TRUE,    
+             position = "bottomright") %>%
+  addMeasure(                        
+    position = "bottomleft",
+    primaryLengthUnit = "meters",
+    primaryAreaUnit = "sqmeters",
+    activeColor = "#3D535D",
+    completedColor = "#7D4479") %>% 
+    htmlwidgets::onRender("
+                         function(el, x) {
+                         var myMap = this;
+                         myMap.on('baselayerchange',
+                         function (e) {
+                         myMap.minimap.changeLayer(L.tileLayer.provider(e.name));
+                         })
+                         }")  %>%
+addControl("", position = "topright")
+full_map
+
+# Save map as a html document 
+saveWidget(full_map, "ruinSiteMap.html", selfcontained = TRUE)
+```
+
+
