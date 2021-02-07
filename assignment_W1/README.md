@@ -1,4 +1,3 @@
-# CDS_Spatial_Analytics
 # W1 - Make me an interactive map
 
 ## Assignment description 
