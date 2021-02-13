@@ -48,14 +48,21 @@ I have here made the size of the marker according to the Accuracy of the finding
 
 places <-read.csv("/Users/astridrybner/Documents/spatial_analytics/Assignment_W1/RCFeature.csv")
 
+# Examine the data using the glimpse() function
+glimpse(places)
+
 #remove rows if there is no info in either the longitude or latitude collumn
 places <- places %>% filter(!is.na(Longitude) | !is.na(Latitude)) 
+
+# Make sure that the columns are numeric
+cols.num <- c("Longitude","Latitude", "Northing", "Easting")
+places[cols.num] <- sapply(places[cols.num], as.numeric)
 
 #make base map with all the sites of findings - and info about each site
 base_map <- leaflet() %>% 
   addTiles() %>% 
   addCircleMarkers(#adding circle markers to all the coordinate pairs
-            lng = places$Longitude, 
+             lng = places$Longitude, 
              lat = places$Latitude,
              popup = paste("<strong>","Finding:",(places$Description),"</strong>",   
                            "<br>", "Feature Type:", places$FeatureType,
