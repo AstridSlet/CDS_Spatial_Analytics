@@ -72,7 +72,22 @@ tm_shape(nz_elev)  +
 
 # Your solution
 
-# /Start Code/ #
+tm_shape(nz_elev)  +
+  tm_raster(title = "elev (m asl)", 
+            style = "cont",
+            palette = "-RdYlGn") +
+  tm_shape(nz) +
+  tm_borders(col = "black", 
+             lwd = 1) +
+  tm_scale_bar(breaks = c(0, 100, 200, 300, 400),
+               text.size = 0.90) +
+  tm_compass(position = c("RIGHT", "top"),
+             type = "rose", 
+             size = 2) +
+  tm_credits(text = "A. Rybner, 14.02.2021") +
+  tm_layout(main.title = "New Zealand",
+            bg.color = "#ADD8E6",
+            inner.margins = c(0, 0, 0, 0))
 
 
 # /End Code/ #
@@ -87,7 +102,28 @@ zion = read_sf(system.file("vector/zion.gpkg", package = "spDataLarge"))
 
 # Your solution
 
-# /Start Code/ #
+tm_shape(srtm)  +
+  tm_raster(title = "elev.", # define title of legend
+            style = "cont", # make color grading continous
+            palette = "-RdYlGn") + # define plot style
+  tm_layout(scale = .9,  # define text size legend 
+            legend.position = c("right","top"), # define legend position
+            legend.bg.color = "white", legend.bg.alpha = .8, # define background opacity of legend
+            legend.frame = "gray50") + # background color legend 
+  tm_shape(zion) + # add the layer with area contours
+  tm_borders(col = "black", 
+             lwd = 1) +  
+  tm_scale_bar(breaks = c(0, 5), # add scale bar 
+               text.size = 0.90, 
+               position = c("LEFT", "bottom")) +
+  tm_compass(position = c("LEFT", "center"), # add north arrow 
+             type = "rose", 
+             size = 2) +
+  tm_credits(text = "A. Rybner, 14.02.2021", position = c("LEFT", "bottom")) + # add credits 
+  tm_layout(main.title = "Zion",
+            inner.margins = c(0, 0, 0, 0)) # Relative margins inside the frame, should all be 0 if the
+# master layer is a raster
+
 
 
 # /End Code/ #
