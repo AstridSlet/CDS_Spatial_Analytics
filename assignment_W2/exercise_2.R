@@ -107,10 +107,9 @@ srtm_transformed <-  projectRaster(srtm, crs = zion_crs, method = "ngb")
 ratify(srtm_transformed) # check that crs is transformed
 
 ### reproject zion into ref system of srtm ###
-crs(srtm) # get crs from srtm
-WGS84 <-"+proj=longlat +datum=WGS84 +no_defs "
-zion_transformed <- st_transform(zion, crs = WGS84) 
+srtm_crs_WGS84 <-crs(srtm, asText = TRUE) # get crs from srtm
+zion_transformed <- st_transform(zion, crs = srtm_crs_WGS84) 
 head(zion_transformed$geom) # check that the crs is changed 
-
+crs(srtm, asText = TRUE)
 
 # /End Code/ #
