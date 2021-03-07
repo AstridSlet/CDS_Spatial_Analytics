@@ -1,0 +1,90 @@
+---
+title: "assignment_W5"
+author: "Astrid Rybner"
+date: "3/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Task 1
+
+A number of factors can negatively affect cultural heritage, from natural post-depositional processes, such as chemical and mechanical weathering, to animal-activity and human-inflicted damage, which can be either direct (excavation, looting) or indirect (development, agricultural activities, transport). In order to understand the anthropic impacts on cultural heritage, archaeologists routinely assess the condition of different types of cultural remains. In the burial mounds dataset, the Condition column contains a professional judgment of monument health recorded on a Likert-scale from 1 to 5, where 1 means the feature is in pristine state, while 5 means it is extinct or nearly so. The 'Robbed' column, specifies via a binary value of 1/0 (corresponding to Yes/No), whether looting was detected on site. The LandUse column contains the surrounding land use, which can also relate to the condition.
+
+Design a study to evaluate direct or indirect impacts on burial mounds. You can use the provided datasets to extract a number of possible variables for this purpose. 
+
+
+## Chosen research question ##
+
+- landuse around the mounds (are mounds in agricultural fields more prone to damage than mounds in the forests?)
+
+```{r}
+library(sf)
+library(rgeos)
+library(rgdal)
+library(tidyverse)
+library(tmap)
+library(leaflet)
+library(htmltools)
+library(htmlwidgets)
+
+
+# load burial mounds GIS data
+burial_mounds <-  st_read("data/KAZ_mounds.shp")
+# drop geometry collumn
+st_geometry(burial_mounds) <- NULL
+
+# load meta data of burial sites 
+metadata <- read.csv("data/KAZ_mdata.csv")
+
+# rename collumn to be able to merge 
+colnames(burial_mounds)[2] <- "MoundID"
+
+# merge dataframes 
+merged_data <- sp::merge(metadata, burial_mounds, by = "MoundID")
+
+# add a color collumn dependent on condition 
+merged_data$color <- as.factor(merged_data$Condition)
+levels(merged_data$color) <- c("Green", "Green", "Yellow", "Red", "Red")
+merged_data$color <- as.character(merged_data$color)
+
+# make visualization
+base_map <- leaflet() %>% 
+  addTiles() %>% 
+  addCircleMarkers(#adding circle markers to all the coordinate pairs
+            lng = merged_data$Long, 
+            lat = merged_data$Lat,
+            color = merged_data$color, 
+            radius = merged_data$Condition,
+            popup = paste("<strong>","Mound ID:",(merged_data$MoundID),"</strong>",   
+                           "<br>", "Land Use:", merged_data$LandUse,
+                            "<br>", "Condition:", merged_data$Condition)
+            )
+base_map
+
+```
+
+
+
+## Writen answer ##
+
+When you click on the red dots in the map (that indicate the this mound is in bad condition) you can see that most of these mounds are of the landuse type 'Annual' (ie. in an agricultural field). On the contrary when you examine the dots in the green 'forest' parts of the maps you can see that most of these are green dots (ie. that the mounds in the forest are in good condition). Thus from this map you get the impresssion that mounds placed in the forest are in best condition compared to mounds placed in agricultural fields. 
+
+This conclusion is supported if you calculate the mean condition for each land-use type, which also shows that the landuse type 'Annual' has the highest average ie. the worst mean condition (with a mean of 3,34) whereas the landuse type 'Forest' has a significantly lower mean condition (2,51) ie. a better mean condition. 
+
+
+```{r}
+
+# Calculate the mean Condition for each land use
+# are mounds in eg forest in better/worse condition? 
+condition_landuse <- metadata %>%
+	select(Condition, LandUse) %>%
+	group_by(LandUse) %>%
+	summarise(Condition = mean(Condition))
+
+condition_landuse
+
+```
+
